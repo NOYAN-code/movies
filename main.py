@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 from telegram import Update
 from telegram.ext import (
@@ -12,7 +13,6 @@ from telegram.ext import (
 
 from config import BOT_TOKEN
 from bot import cmd_start, cmd_cancel, handle_message, movie_callback, quality_callback
-from server import keep_alive
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,7 +24,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def main():
-    keep_alive()
+    if not os.getenv("SPACE_ID"):
+        from server import keep_alive
+        keep_alive()
+
     app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", cmd_start))

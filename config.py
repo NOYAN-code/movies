@@ -4,7 +4,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent
 DOWNLOAD_DIR = BASE_DIR / "downloads"
 
-BOT_TOKEN = "8979940983:AAGM75mwuB8Udi3FKKK513GofMfVNq2sOlc"
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8979940983:AAGM75mwuB8Udi3FKKK513GofMfVNq2sOlc")
 YTS_API_BASE = "https://yts.ag/api/v2"
 
 SPLIT_THRESHOLD = 3 * 1024 * 1024 * 1024
