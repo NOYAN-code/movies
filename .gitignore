@@ -3,3 +3,4 @@ __pycache__/
 *.pyo
 downloads/
 .env
+movie_bot/
