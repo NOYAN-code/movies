@@ -7,8 +7,8 @@ DOWNLOAD_DIR = BASE_DIR / "downloads"
 BOT_TOKEN = os.getenv("BOT_TOKEN", "8979940983:AAGM75mwuB8Udi3FKKK513GofMfVNq2sOlc")
 YTS_API_BASE = "https://yts.ag/api/v2"
 
-SPLIT_THRESHOLD = 900 * 1024 * 1024
-PART_MAX_SIZE = 800 * 1024 * 1024
+SPLIT_THRESHOLD = 500 * 1024 * 1024
+PART_MAX_SIZE = 400 * 1024 * 1024
 
 TRACKERS = [
     "udp://tracker.openbittorrent.com:6969/announce",

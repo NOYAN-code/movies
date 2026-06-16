@@ -15,6 +15,8 @@ from telegram.ext import (
     ContextTypes,
 )
 
+from telegram.error import NetworkError
+
 from config import BOT_TOKEN, YTS_API_BASE, DOWNLOAD_DIR, SPLIT_THRESHOLD, PART_MAX_SIZE, TRACKERS
 from search import MovieSearcher
 from downloader import TorrentDownloader
@@ -268,6 +270,17 @@ async def _download_and_send(update: Update, context: ContextTypes.DEFAULT_TYPE,
         state.is_downloading = False
 
 
+async def _send_with_retry(send_fn, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return await send_fn()
+        except NetworkError as e:
+            if attempt == max_retries - 1:
+                raise
+            logger.warning("Send attempt %d failed: %s, retrying...", attempt + 1, str(e)[:80])
+            await asyncio.sleep(5 * (attempt + 1))
+
+
 async def _send_video(
     context: ContextTypes.DEFAULT_TYPE,
     chat_id: int,
@@ -275,16 +288,19 @@ async def _send_video(
     movie,
     quality: str,
 ):
-    with open(filepath, "rb") as f:
-        await context.bot.send_video(
-            chat_id=chat_id,
-            video=f,
-            caption=f"🎬 {movie.title} ({movie.year})\n💿 {quality}",
-            supports_streaming=True,
-            read_timeout=1200,
-            write_timeout=1200,
-            connect_timeout=1200,
-        )
+    async def send():
+        with open(filepath, "rb") as f:
+            return await context.bot.send_video(
+                chat_id=chat_id,
+                video=f,
+                caption=f"🎬 {movie.title} ({movie.year})\n💿 {quality}",
+                supports_streaming=True,
+                read_timeout=1200,
+                write_timeout=1200,
+                connect_timeout=1200,
+            )
+
+    await _send_with_retry(send)
 
 
 async def _split_and_send(
@@ -303,19 +319,22 @@ async def _split_and_send(
     )
 
     for i, part in enumerate(parts, 1):
-        with open(part, "rb") as f:
-            await context.bot.send_video(
-                chat_id=chat_id,
-                video=f,
-                caption=(
-                    f"🎬 {movie.title} ({movie.year})\n"
-                    f"💿 {quality}\n📦 الجزء {i}/{len(parts)}"
-                ),
-                supports_streaming=True,
-                read_timeout=1200,
-                write_timeout=1200,
-                connect_timeout=1200,
-            )
+        async def send(part=part, i=i):
+            with open(part, "rb") as f:
+                return await context.bot.send_video(
+                    chat_id=chat_id,
+                    video=f,
+                    caption=(
+                        f"🎬 {movie.title} ({movie.year})\n"
+                        f"💿 {quality}\n📦 الجزء {i}/{len(parts)}"
+                    ),
+                    supports_streaming=True,
+                    read_timeout=1200,
+                    write_timeout=1200,
+                    connect_timeout=1200,
+                )
+
+        await _send_with_retry(send)
         try:
             part.unlink()
         except Exception:
