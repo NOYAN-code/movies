@@ -7,27 +7,23 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 
-logger = logging.getLogger(__name__)
+
+def start_gradio():
+    import gradio as gr
+
+    with gr.Blocks(title="Movie Bot") as demo:
+        gr.Markdown(
+            """
+        # Movie Downloader Bot
+        Bot is running on Telegram. Send a movie name to download it.
+            """
+        )
+
+    demo.launch(server_port=7860)
 
 
-def start_bot():
-    from main import main
-    main()
+gradio_thread = threading.Thread(target=start_gradio, daemon=True)
+gradio_thread.start()
 
-
-bot_thread = threading.Thread(target=start_bot, daemon=True)
-bot_thread.start()
-
-import gradio as gr
-
-with gr.Blocks(title="Movie Bot", theme=gr.themes.Soft()) as demo:
-    gr.Markdown(
-        """
-    # 🎬 Movie Downloader Bot
-
-    **البوت شغال!** أرسل اسم فيلم للبوت على تليجرام.
-        """
-    )
-    gr.Textbox("🟢 Bot is running", label="Status", interactive=False)
-
-demo.launch(server_port=7860)
+from main import main
+main()
