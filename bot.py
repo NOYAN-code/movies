@@ -184,6 +184,11 @@ async def quality_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("⏳ لديك تحميل قيد التشغيل.")
         return
 
+    if not state.movie:
+        await query.edit_message_text("❌ حدث خطأ. ابحث عن الفيلم مرة أخرى.")
+        state.is_downloading = False
+        return
+
     parts = query.data.split("_")
     torrent_hash = parts[1]
     quality = parts[2]
@@ -213,6 +218,10 @@ async def _download_and_send(update: Update, context: ContextTypes.DEFAULT_TYPE,
     chat_id = update.effective_chat.id
     movie = state.movie
     loop = asyncio.get_event_loop()
+
+    if not movie:
+        state.is_downloading = False
+        return
 
     def _update(msg_text: str):
         try:
@@ -350,11 +359,5 @@ def _cleanup(filepath: Path):
     try:
         if filepath.exists():
             filepath.unlink()
-    except Exception:
-        pass
-    try:
-        parent = filepath.parent
-        if parent.exists():
-            shutil.rmtree(parent)
     except Exception:
         pass
